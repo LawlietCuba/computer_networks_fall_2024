@@ -123,7 +123,9 @@ class IRCServer:
 
 
 def main():
-    server_ip = "127.0.0.1"
+    
+    print("Hola")
+    server_ip = "localhost"
     server_port = 8080
 
     irc_server = IRCServer(server_ip, server_port)
