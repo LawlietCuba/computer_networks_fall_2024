@@ -2,4 +2,4 @@
 
 # Replace the next shell command with the entrypoint of your solution
 
-echo "Running the IRC server"
+python3 /tests/irc/dist/IRC_Server.py

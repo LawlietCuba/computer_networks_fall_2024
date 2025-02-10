@@ -4,11 +4,9 @@ import threading
 import sys
 
 class IRCServer:
-    def __init__(self, host, port, central_host, central_port):
+    def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.central_host = central_host
-        self.central_port = central_port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connections = []
         self.channels = {"General": []}
@@ -18,7 +16,6 @@ class IRCServer:
         try:
             self.socket.bind((self.host, self.port))
             self.socket.listen(5)
-            print(f"IRC Server started at {self.host}:{self.port}, connecting to central server at {self.central_host}:{self.central_port}")
         except Exception as e:
             print(f"Error starting IRC Server: {e}")
             sys.exit(1)
@@ -29,20 +26,9 @@ class IRCServer:
             self.connections.append(client_socket)
             threading.Thread(target=self.handle_client, args=(client_socket,)).start()
 
-    def connect_to_central_server(self):
-        try:
-            self.central_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.central_socket.connect((self.central_server_host, self.central_server_port))
-            print(f"Conectado al servidor central en {self.central_server_host}:{self.central_server_port}")
-            
-            # Enviar información al servidor central, como el host y el puerto de este servidor IRC
-            self.central_socket.sendall(f"Servidor IRC {self.host}:{self.port} está activo.\r\n".encode())
-        except Exception as e:
-            print(f"No se pudo conectar al servidor central: {e}")
-
     def handle_client(self, client_socket):
         client_socket.sendall("¡Bienvenido al servidor IRC local!\r\n".encode())
-        self.join_channel(client_socket, "General")
+        # self.join_channel(client_socket, "General")
 
         while True:
             try:
@@ -58,6 +44,12 @@ class IRCServer:
         self.disconnect_client(client_socket)
 
     def process_command(self, client_socket, message):
+        if not message.startswith("/"):
+            client_socket.sendall("Comando no válido. Los comandos deben comenzar con '/'.\r\n".encode())
+            return  
+        
+        message = message[1:]
+
         parts = message.split(" ", 2)
         command = parts[0].upper()
         
@@ -88,7 +80,7 @@ class IRCServer:
     def leave_channel(self, client_socket, channel):
         if channel in self.channels and client_socket in self.channels[channel]:
             self.channels[channel].remove(client_socket)
-            client_socket.sendall(f"Has dejado el canal {channel}\r\n".encode())
+            client_socket.sendall(f"Has salido del canal {channel}\r\n".encode())
 
     def send_message(self, sender_socket, target, message):
         if target in self.channels:
@@ -119,7 +111,7 @@ class IRCServer:
             client_socket.sendall(f"Canal {channel} no encontrado\r\n".encode())
 
     def change_nickname(self, client_socket, new_nickname):
-        client_socket.sendall(f"Tu apodo ha sido cambiado a {new_nickname}\r\n".encode())
+        client_socket.sendall(f"Tu nuevo apodo es {new_nickname}\r\n".encode())
 
     def disconnect_client(self, client_socket):
         for channel in self.channels.values():
@@ -132,11 +124,9 @@ class IRCServer:
 
 def main():
     server_ip = "127.0.0.1"
-    server_port = 6667
-    central_server_host = "127.0.0.1"  
-    central_server_port = 8888 
+    server_port = 8080
 
-    irc_server = IRCServer(server_ip, server_port, central_server_host, central_server_port)
+    irc_server = IRCServer(server_ip, server_port)
     irc_server.start()
 
 if __name__ == "__main__":
