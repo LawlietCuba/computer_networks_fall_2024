@@ -2,4 +2,4 @@
 
 # Replace the next shell command with the entrypoint of your solution
 
-echo $@
+echo "Running the IRC server"
