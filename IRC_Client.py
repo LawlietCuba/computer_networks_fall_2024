@@ -27,8 +27,8 @@ def main():
 
     try:
         # # Si el comando principal NO es NICK, primero se envía el comando NICK para identificarse.
-        # if nickname not in irc_server.nicknames and command.upper() != "NICK":
-        #     nick_message = f"/NICK {nickname}\r\n"
+        if nickname not in irc_server.nicknames and command.upper() != "NICK":
+            nick_message = f"/NICK {nickname}\r\n"
             irc_server.process_command(client_socket, nick_message)
             irc_server.process_command(client_socket, "/JOIN #General\r\n")
             
