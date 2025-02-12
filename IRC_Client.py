@@ -41,7 +41,10 @@ def main():
 
     except Exception as e:
         print(f"Error al enviar/recibir datos: {e}")
-    finally:
+        
+    import_message = command_message.strip().upper()
+    
+    if import_message == "/QUIT":
         irc_server.shutdown()
 
 if __name__ == "__main__":
