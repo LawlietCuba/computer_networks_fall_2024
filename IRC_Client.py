@@ -7,15 +7,11 @@ import time
 from IRC_Server import IRCServer
 
 def main():
-    parser = argparse.ArgumentParser(description="Cliente IRC")
-    parser.add_argument("-H", "--host", required=True, help="Dirección IP del servidor")
-    parser.add_argument("-p", "--port", type=int, required=True, help="Puerto del servidor")
-    parser.add_argument("-n", "--nick", required=True, help="Nickname del usuario")
-    parser.add_argument("-c", "--command", required=True, help="Comando a ejecutar (NICK, JOIN, PART, MSG, NOTICE, LIST, NAMES)")
-    parser.add_argument("-a", "--argument", required=True, help="Argumento del comando")
-    args = parser.parse_args()
+    test_input = sys.argv[1:]
+    server_ip, port, nickname, command, argument = test_input[1],int(test_input[3]),test_input[5],'/'+test_input[7].split('/').pop(),test_input[9:]
+    argument = ' '.join(argument)
     
-    irc_server = IRCServer(args.host, args.port)
+    irc_server = IRCServer(server_ip, port)
     server_thread = threading.Thread(target=irc_server.start, daemon=False)
     server_thread.start()
     
@@ -24,21 +20,21 @@ def main():
     # Crear el socket y conectar con el servidor IRC.
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((args.host, args.port))
+        client_socket.connect((server_ip, port))
     except Exception as e:
         print(f"Error al conectar al servidor: {e}")
         sys.exit(1)
 
     try:
         # Si el comando principal NO es NICK, primero se envía el comando NICK para identificarse.
-        if args.command.upper() != "NICK":
-            nick_message = f"/NICK {args.nick}\r\n"
+        if command.upper() != "NICK":
+            nick_message = f"/NICK {nickname}\r\n"
             irc_server.process_command(client_socket, nick_message)
+            
+        time.sleep(1)
 
         # El formato esperado por el servidor es: /<COMMAND> <ARGUMENT>
-        command_message = f"{args.command} {args.argument}\r\n"
-        
-        print(command_message)
+        command_message = f"{command} {argument}\r\n"
         
         irc_server.process_command(client_socket, command_message)
 
