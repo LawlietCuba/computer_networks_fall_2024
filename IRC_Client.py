@@ -16,7 +16,7 @@ def main():
     args = parser.parse_args()
     
     irc_server = IRCServer(args.host, args.port)
-    server_thread = threading.Thread(target=irc_server.start, daemon=True)
+    server_thread = threading.Thread(target=irc_server.start, daemon=False)
     server_thread.start()
     
     time.sleep(1)
@@ -45,7 +45,6 @@ def main():
     except Exception as e:
         print(f"Error al enviar/recibir datos: {e}")
     finally:
-        # server_thread.join()
         irc_server.shutdown()
 
 if __name__ == "__main__":

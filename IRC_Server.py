@@ -17,6 +17,7 @@ class IRCServer:
         try:
             self.socket.bind((self.host, self.port))
             self.socket.listen(5)
+            self.socket.settimeout(1.0)
             print(f"Servidor escuchando en {self.host}:{self.port}")
         except Exception as e:
             print(f"Error starting IRC Server: {e}")
@@ -27,10 +28,8 @@ class IRCServer:
             try:
                 client_socket, client_address = self.socket.accept()
             except socket.timeout:
-                # Timeout occurred, check if we should keep running.
                 continue
             except OSError:
-                # Socket has been closed, exit loop.
                 break
             
             print(f"Nueva conexión desde {client_address}")
@@ -40,10 +39,10 @@ class IRCServer:
             threading.Thread(target=self.handle_client, args=(client_socket,)).start()
         
     def handle_client(self, client_socket):
-        # Enviar mensaje de bienvenida
-        # client_socket.sendall("¡Bienvenido al servidor IRC local!\r\n".encode())
         # Unirse automáticamente al canal "General"
-        self.join_channel(client_socket, "General")
+        self.join_channel(client_socket, "#General")
+
+        client_socket.settimeout(5.0)
 
         while True:
             try:
@@ -52,13 +51,22 @@ class IRCServer:
                     break
                 print(data)
                 self.process_command(client_socket, data)
-            except Exception as e:
-                print(f"Error al manejar cliente: {e}")
-                break
+                
+            except socket.timeout: 
+                # print("Timeout: no se recibieron datos en 5 segundos, cerrando conexión")
+                break    
+            except OSError as e:
+                if hasattr(e, 'winerror') and e.winerror == 10038:
+                    break
+                else:
+                    print(f"Error al manejar cliente: {e}")
+                    break
 
         self.disconnect_client(client_socket)
         
     def process_command(self, client_socket, message):
+        # print("Mensaje recibido: ", message)
+        
         if not message.startswith("/"):
             client_socket.sendall("Comando no válido. Los comandos deben comenzar con '/'.\r\n".encode())
             return  
@@ -153,5 +161,12 @@ class IRCServer:
         print("Cliente desconectado")
         
     def shutdown(self):
+        # for conn in self.connections:
+        #     try:
+        #         conn.shutdown(socket.SHUT_RDWR)
+        #         conn.close()
+        #     except Exception:
+        #         pass
+            
         self.running = False
         self.socket.close()
