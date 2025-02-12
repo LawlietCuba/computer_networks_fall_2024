@@ -11,6 +11,7 @@ class IRCServer:
         self.connections = []          # Lista de sockets conectados
         self.channels = {"#General": []}  # Diccionario de canales: canal -> lista de sockets
         self.nicknames = {}            # Diccionario: socket -> nickname
+        self.running = False
 
     def start(self):
         try:
@@ -21,9 +22,18 @@ class IRCServer:
             print(f"Error starting IRC Server: {e}")
             sys.exit(1)
 
-        while True:
-            client_socket, client_address = self.socket.accept()
-            # print(f"Nueva conexión desde {client_address}")
+        self.running = True
+        while self.running:
+            try:
+                client_socket, client_address = self.socket.accept()
+            except socket.timeout:
+                # Timeout occurred, check if we should keep running.
+                continue
+            except OSError:
+                # Socket has been closed, exit loop.
+                break
+            
+            print(f"Nueva conexión desde {client_address}")
             self.connections.append(client_socket)
             # Asignamos un nombre por defecto (por ejemplo, la dirección) hasta que se envíe /NICK
             self.nicknames[client_socket] = f"{client_address}"
@@ -33,7 +43,7 @@ class IRCServer:
         # Enviar mensaje de bienvenida
         # client_socket.sendall("¡Bienvenido al servidor IRC local!\r\n".encode())
         # Unirse automáticamente al canal "General"
-        # self.join_channel(client_socket, "General")
+        self.join_channel(client_socket, "General")
 
         while True:
             try:
@@ -141,3 +151,7 @@ class IRCServer:
             del self.nicknames[client_socket]
         client_socket.close()
         print("Cliente desconectado")
+        
+    def shutdown(self):
+        self.running = False
+        self.socket.close()

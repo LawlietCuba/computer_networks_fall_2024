@@ -45,8 +45,8 @@ def main():
     except Exception as e:
         print(f"Error al enviar/recibir datos: {e}")
     finally:
-        server_thread.join()
-        client_socket.close()
+        # server_thread.join()
+        irc_server.shutdown()
 
 if __name__ == "__main__":
     main()
