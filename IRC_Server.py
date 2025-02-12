@@ -111,7 +111,6 @@ class IRCServer:
         channel = channel.strip()
         
         if channel in self.channels.keys():
-            print("Channel found")
             if client_socket in self.channels[channel]:
                 self.channels[channel].remove(client_socket)
                 client_socket.sendall(f"Has salido del canal {channel}\r\n".encode())
